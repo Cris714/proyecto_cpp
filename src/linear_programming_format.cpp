@@ -1,242 +1,98 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <unordered_map>
 #include <chrono>
 
 #include "file_manager.h"
-
-template <class T>
-inline void hash_combine(std::size_t& seed, T const& v)
-{
-    seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
-namespace std
-{
-    template<typename T>
-    struct hash<vector<T>>
-    {
-        typedef vector<T> argument_type;
-        typedef std::size_t result_type;
-        result_type operator()(argument_type const& in) const
-        {
-            size_t size = in.size();
-            size_t seed = 0;
-            for (size_t i = 0; i < size; i++)
-                //Combine the hash of the current vector with the hashes of the previous ones
-                hash_combine(seed, in[i]);
-            return seed;
-        }
-    };
-}
+#include "objective_and_constraints.h" 
 
 
 using namespace std;
 
+
+// DEFINICION DE CONJUNTOS
+#ifndef _SETS
+#define P {1,2,3,4} // propietario
+#define R {5,6,7,8,9,10,13,14} // region administrativa
+#define Z {1,2,4,5,6,7,9} // zona de crecimiento
+#define S {1,2,3,4} // clases de sitio
+#define M {1,2,3,7,8,9,10,11,12} // esquemas de manejo
+#define K {1,2,3,4,5,6,7,8,9,10,11,12,13} // producto
+#define I_MAX 30 // año de plantacion (-)
+#endif
+
+
+
 int main(){
-    using namespace std::chrono;
-
-    string path, line = "", str_i, str_j, str_k, str_z, str_r;
-    high_resolution_clock::time_point t1;
-    high_resolution_clock::time_point t2;
-    duration<double> time_span;
-
-    // USANDO HASHMAP
-    unordered_map<vector<int>, int> fast;
-    unordered_map<vector<int>, int> fast_areas;
-    path = "./output3.txt";
-
-    t1 = high_resolution_clock::now();
-    cout << "Generando hashmap..." << endl;
-    
-    load_file_to_hashmap<int>("./sample.txt", fast);
-    load_file_to_hashmap<int>("./areas.txt", fast_areas);
-
-    t2 = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(t2 - t1);
-    std::cout << "Elapsed time: " << time_span.count() << "s" << endl;
-
-    t1 = high_resolution_clock::now();
-    cout << "Generando funcion..." << endl;
-
-    for(int i = 1; i <= 100; i++){
-        str_i = to_string(i);
-        for(int j = 1; j <= 20; j++){
-            str_j = to_string(j);
-            for(int k = 1; k <= 40; k++){
-                str_k = to_string(k);
-                for(int z = 1; z <= 10; z++){
-                    str_z = to_string(z);
-                    for(int r = 1; r <= 10; r++){
-                        str_r = to_string(r);
-                        line += to_string(fast[{i,j,k,z,r}]) + " X" + (i < 10? "0"+str_i : str_i) + (j < 10? "0"+str_j : str_j)
-                                + (k < 10? "0"+str_k : str_k) + (j < 10? "0"+str_z : str_z) + (r < 10? "0"+str_r : str_r);
-                        for(int c = 0; c < 10; c++) fast[{i,j,k,z,r}];
-                        
-                        if(i != 10 || j != 3 || k != 40 || z != 10 || r != 2){
-                            line += " + ";
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    t2 = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(t2 - t1);
-    std::cout << "Elapsed time: " << time_span.count() << "s" << endl;
-
-    fast.clear();
-
-    create_or_empty(path);
-    append_to_file(path, "Max\n");
-    append_to_file(path, line);
+    const string out_filename = "../out/output.lp";
 
 
+    // VARIABLES 
 
-    // USANDO MAP
-    map<vector<int>, int> values; 
-    map<vector<int>, int> areas;
-    path = "./output.txt";
-    line = "";
+    string str_out; // string con la funcion/restriccion construida
 
 
-    t1 = high_resolution_clock::now();
-    cout << "Generando mapa..." << endl;
-    
-    load_file_to_map<int>("./sample.txt", values);
-    load_file_to_map<int>("./areas.txt", areas);
+    // GENERACION DE MAPA DE RENDIMIENTO Y SUPERFICIE
 
-    t2 = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(t2 - t1);
-    std::cout << "Elapsed time: " << time_span.count() << "s" << endl;
+    map<vector<unsigned short>, float> perf; // rendimiento
+    map<vector<unsigned short>, float> surf; // superficie
+
+    load_file_to_map<unsigned short, float>("../data/rendimientos.csv", perf);
+    load_file_to_map<unsigned short, float>("../data/superficie.csv", surf);
 
 
-    create_or_empty(path);
-    append_to_file(path, "Max\n");
+    // CREACION DEL ARCHIVO DE SALIDA
+
+    create_or_empty(out_filename);
+    append_to_file(out_filename, "Max\n");
 
 
-    // Funcion 
+    // FUNCION OBJETIVO 
 
-    t1 = high_resolution_clock::now();
-    cout << "Generando funcion..." << endl;
+    objective_function(str_out, perf);
+    append_to_file(out_filename, str_out, 'f');
+    str_out = "";
+    cout << "Funcion objetivo: LISTO" << endl;
 
-    for(int i = 1; i <= 100; i++){
-        str_i = to_string(i);
-        for(int j = 1; j <= 20; j++){
-            str_j = to_string(j);
-            for(int k = 1; k <= 40; k++){
-                str_k = to_string(k);
-                for(int z = 1; z <= 10; z++){
-                    str_z = to_string(z);
-                    for(int r = 1; r <= 10; r++){
-                        str_r = to_string(r);
-                        line += to_string(values[{i,j,k,z,r}]) + " X" + (i < 10? "0"+str_i : str_i) + (j < 10? "0"+str_j : str_j)
-                                + (k < 10? "0"+str_k : str_k) + (j < 10? "0"+str_z : str_z) + (r < 10? "0"+str_r : str_r);
-                        for(int c = 0; c < 10; c++) values[{i,j,k,z,r}];
-                        
-                        if(i != 10 || j != 3 || k != 40 || z != 10 || r != 2){
-                            line += " + ";
-                        }
-                    }
-                }
-            }
-        }
-    }
 
-    t2 = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(t2 - t1);
-    std::cout << "Elapsed time: " << time_span.count() << "s" << endl;
-/*
-    for(int i = 1; i <= 10; i++){
-        str_i = to_string(i);
-        for(int j = 1; j <= 2; j++){
-            str_j = to_string(j);
-            line += to_string(values[{i,j}]) + " X" + (i < 10? "0"+str_i : str_i) + (j < 10? "0"+str_j : str_j);
-            if(i != 10 || j != 2){
-                line += " + ";
-            }
-        }
-    }
-*/
-    append_to_file(path, line+"\n");
+    // RESTRICCIONES
 
-    append_to_file(path, "Subject to\n");
+    append_to_file(out_filename, "\nSubject to");
 
-    for(int i = 1; i <= 10; i++){
-        line = "";
-        str_i = to_string(i);
-        line += "SUP"+(i < 10? "0"+str_i : str_i)+") ";
-        for(int j = 1; j <= 2; j++){
-            str_j = to_string(j);
-            line += "X" + (i < 10? "0"+str_i : str_i) + (j < 10? "0"+str_j : str_j);
-            if(j != 2){
-                line += " + ";
-            }
-        }
-        line += " <= " + to_string(areas[{i}]) + (i != 10? "\n" : "");
-        append_to_file(path, line);
-    }
+    // Restricción de inventario inicial
+    constraint1(str_out, surf);
+    append_to_file(out_filename, str_out, 'r');
+    str_out = "";
+    cout << "Restriccion 1: LISTO" << endl;
+
+    // // Cuantificación de superficie cosechada
+    // constraint2(str_out, surf);
+    // append_to_file(out_filename, str_out, 'r');
+    // str_out = "";
+    // cout << "Restriccion 2: LISTO" << endl;
+
+    // // Cuantificación de volumen  de corta final
+    // constraint3(str_out, perf);
+    // append_to_file(out_filename, str_out, 'r');
+    // str_out = "";
+    // cout << "Restriccion 3: LISTO" << endl;
+
+    // // Exclusión superficie de reconversión 
+    // constraint4(str_out, perf);
+    // append_to_file(out_filename, str_out, 'r');
+    // str_out = "";
+    // cout << "Restriccion 4: LISTO" << endl;
 
 
 
-    // USANDO TABLE
+    append_to_file(out_filename, "\nend");
 
-    t1 = high_resolution_clock::now();
-    cout << "Generando tabla..." << endl;
-    
-    Table<int> data, areas_table;
-    load_file_to_table<int>("./sample.txt", data);
-    load_file_to_table<int>("./areas.txt", areas_table);
 
-    t2 = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(t2 - t1);
-    std::cout << "Elapsed time: " << time_span.count() << "s" << endl;
+    cout << "***FIN DEL PROGRAMA. SALIDA GENERADA CON EXITO***" << endl;
 
-    data.add_param("i", 1, 100);
-    data.add_param("j", 1, 20);
-    data.add_param("k", 1, 40);
-    data.add_param("z", 1, 10);
-    data.add_param("r", 1, 2);
-
-    t1 = high_resolution_clock::now();
-    cout << "Generando funcion..." << endl;
-
-    line = "";
-
-    for(int i = 1; i <= 100; i++){
-        str_i = to_string(i);
-        for(int j = 1; j <= 20; j++){
-            str_j = to_string(j);
-            for(int k = 1; k <= 40; k++){
-                str_k = to_string(k);
-                for(int z = 1; z <= 10; z++){
-                    str_z = to_string(z);
-                    for(int r = 1; r <= 10; r++){
-                        str_r = to_string(r);
-                        line += to_string(data[{i,j,k,z,r}]) + " X" + (i < 10? "0"+str_i : str_i) + (j < 10? "0"+str_j : str_j)
-                                + (k < 10? "0"+str_k : str_k) + (j < 10? "0"+str_z : str_z) + (r < 10? "0"+str_r : str_r);
-                        
-                        for(int c = 0; c < 10; c++) data[{i,j,k,z,r}];
-                        
-                        if(i != 10 || j != 3 || k != 40 || z != 10 || r != 2){
-                            line += " + ";
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    t2 = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(t2 - t1);
-    std::cout << "Elapsed time: " << time_span.count() << "s" << endl;
-
-    path = "./output2.txt";
-    create_or_empty(path);
-    append_to_file(path, "Max\n");
-    append_to_file(path, line);
 
     return 0;
 }
+
+
+
