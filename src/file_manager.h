@@ -37,6 +37,13 @@ void create_or_empty(const string& path){
 
 
 void append_to_file(const string& path, const string& text, const char flag='n'){
+    /*
+     - flags:
+    'n' <- (default) solo escribe
+    'f' <- función objetivo
+    'r' <- restricciones (solo si contiene variables con nombres de 1 letra)
+    'a' <- restricciones (para cualquier restricción, pero más lento)
+    */
     ofstream file(path, ios::app);
     string line = "";
     const int text_length = text.length();
@@ -69,12 +76,54 @@ void append_to_file(const string& path, const string& text, const char flag='n')
         int line_width = 0;
 
         for(int i = 0; i < text_length; i++){
-            if(text[i] == char_zero){
+            if(text[i] == char_zero && text[i+1] > 64){ // controla el salto de linea solo si empieza con char_zero y le sigue una letra
                 line += "\n";
                 temp_str = "";
                 line_width = 0;
             }
+            
             if(text[i] != ' '){
+                temp_str += text[i];
+            }
+            else if(line_width + temp_str.length() + 1 < MAX_WIDTH){
+                line += (line_width == 0? "" : " ")+temp_str;
+                line_width += (line_width == 0? 0 : 1)+temp_str.length();
+                temp_str = "";
+            }
+            else{
+                line += " \n"+temp_str;
+                line_width = temp_str.length();
+                temp_str = "";
+            }
+        }
+        file << line;
+        file.close();
+    }
+    else if(flag == 'a'){
+        string temp_str = "";
+        string temp_var_name = "", rvar_name = "";
+        int i = 0, line_width = 0;
+
+        // consigue el nombre de la variable de restricción
+        while(text[i] > 64 && text[i] < 91){
+            rvar_name += text[i++];
+        }
+
+        for(int i = 0; i < text_length; i++){
+            if(text[i] > 64 && text[i] < 91){ // busca y construye nombres de variable
+                temp_var_name += text[i];
+            }
+            else{
+                temp_var_name = "";
+            }
+
+            if(temp_var_name == rvar_name){ // controla el salto de linea solo si se encuentra rvar_name
+                line += "\n";
+                temp_str = rvar_name;
+                line_width = 0;
+            }
+            
+            else if(text[i] != ' '){
                 temp_str += text[i];
             }
             else if(line_width + temp_str.length() + 1 < MAX_WIDTH){
