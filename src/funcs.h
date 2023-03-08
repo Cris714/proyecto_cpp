@@ -7,14 +7,13 @@ using namespace std;
 
 // DEFINICION DE CONJUNTOS
 
-#define _SETS
 #define P {1,2,3,4} // propietario
-#define R {5,6,7,8,9,10,13,14} // region administrativa
+#define R {5,6,7,8,9,10,13,14,16} // region administrativa
 #define Z {1,2,4,5,6,7,9} // zona de crecimiento
 #define S {1,2,3,4} // clases de sitio
-#define M {1,2,3,7,8,9,10,11,12} // esquemas de manejo
-#define K {1,2,3,4,5,6,7,8,9,10,11,12,13} // producto
-#define I_MAX 30 // año de plantacion (-)
+#define M {1,2,3,4,5,6,9,10,11} // esquemas de manejo
+#define K {1,2,3,4,5,6,7} // producto
+#define J_MAX 41 // horizonte de planificacion
 
 #define _DIGITS 4
 
@@ -33,64 +32,78 @@ template <typename T> inline string format(const T num) {
     return ss.str();
 }
 
-template <typename T> vector<T> get_range(const T prop, const T clase){
+template <typename T> vector<T> get_range(const T p, const T m){
     // Rango de edades para propietario p y manejo m
-    if(clase > 3 && clase < 7) return {0,0};
-    if(prop < 3 && clase == 1) return {18, 23};
-    if(prop < 5 && clase == 1) return {18, 22};
-    if(prop < 3 && clase < 4) return {20,23};
-    if(prop < 5 && clase < 4) return {18,23};
-    if(prop < 3 && clase < 11) return {22, 26};
-    if(prop < 5 && clase < 11) return {22, 25};
-    if(prop == 1 && clase == 11) return {11, 18};
-    if(prop == 2 && clase == 11) return {10, 18};
-    if(prop < 5 && clase == 11) return {9,12};
-    if(prop < 3 && clase == 12) return {13,18};
-    if(prop < 5 && clase == 12) return {11,18};
+    if (m < 1) return { 0, 0 };
+    if (m < 3) return { 18, 23 };
+    if (m < 5) return { 20, 24 };
+    if (m < 7) return { 22, 26 };
+    if (m < 10) return { 12, 18 };
+    if (m < 12) return { 13, 18 };
     return {0,0};
 }
 
-template <typename T> inline vector<T> C(const T m){
-    // cambio de especie desde manejo m
-    if(m == 8) return {9,11,12};
-    if(m > 0 && m <= 10) return {m,11,12};
-    if(m > 0 && m <= 12) return {1,2,3,4,5,6,7,9,11,12};
-    return {};
+template <typename T> vector<T> get_range_over(const T p, const T m) {
+    // Rango de edades de plantaciones sobremaduras para propietario p y manejo m
+    if (m < 1) return { 0, 0 };
+    if (m < 3) return { 24, 35 };
+    if (m < 5) return { 25, 35 };
+    if (m < 7) return { 27, 35 };
+    if (m < 10) return { 19, 25 };
+    if (m < 12) return { 19, 30 };
+    return { 0,0 };
 }
 
 
 
 template <typename T, typename value_type> 
-void objective_function(string& str_func, string& str_col, string& str_row, map<vector<T>, value_type>& perf){
+void objective_function(
+    string& str_func, 
+    string& str_col, 
+    string& str_row, 
+    map<vector<T>, value_type> &rendimientos,
+    map<vector<T>, value_type> &factor
+    ){
     // Función Objetivo
     string str_p, str_r, str_z, str_s, str_m, str_k, str_i, str_j;
     string var, coef;
-    float v_sum;
+    float v_sum, fact;
+    unsigned short age;
+
+    vector<unsigned short> rg, rgo;
 
     str_row += "FO,N,0\n";
 
-    for(unsigned short p: P){
+    for (unsigned short p : P) {
         str_p = index_string(p);
-        for(unsigned short r: R){
+        for (unsigned short r : R) {
             str_r = index_string(r);
-            for(unsigned short z: Z){
+            for (unsigned short z : Z) {
                 str_z = index_string(z);
-                for(unsigned short s: S){
+                for (unsigned short s : S) {
                     str_s = index_string(s);
-                    for(unsigned short m: M){
+                    for (unsigned short m : M) {
                         str_m = index_string(m);
-                        vector<unsigned short> rg = get_range<unsigned short>(p, m); // rango de edades
-                        for(unsigned short i = I_MAX; i > 0; --i){
-                            str_i = index_string(i);
-                            for(unsigned short j = max(0, -i+rg[0]); j <= max(0, -i+rg[1]); j++){
+                        rg = get_range<unsigned short>(p, m); // rango de edades
+                        rgo = get_range_over<unsigned short>(p, m); // rango de edades p. sobremaduras
+                        for (short i = -rgo[1]; i <= J_MAX - rg[0]; i++) {
+                            str_i = index_string(i < 0 ? -i : i);
+                            for (unsigned short j = 0; j <= J_MAX; j++) {
                                 str_j = index_string(j);
+
                                 v_sum = 0.F;
-                                for(unsigned short k: K){
-                                    v_sum += perf[{k,z,s,m,(unsigned short)(i+j)}];
+                                fact = (i < 0 ? factor[{p, r, z, s, m, (unsigned short)(-i)}] : 0.F);
+
+                                if (fact > 1e-3) { // factor > ~0
+                                    for (unsigned short k : K) {
+                                        age = (i < 0 ? (unsigned short)(-i) + j : j - (unsigned short)i);
+                                        v_sum += rendimientos[{k, z, s, m, age}];
+                                    }
                                 }
-                                if(v_sum > 1e-3){ // multiplicador != 0
-                                    var = "Y"+str_p+str_r+str_z+str_s+str_m+str_i+str_j;
-                                    coef = format(v_sum);
+
+                                if (v_sum > 1e-3) { // multiplicador > ~0
+                                    var = (i < 0 ? "Y" : "X") + str_p + str_r + str_z + str_s + str_m + str_i + str_j;
+                                    coef = format(v_sum*fact);
                                     str_func += coef+" "+var+" + ";
                                     str_col += "FO,"+var+","+coef+"\n";
                                 }
@@ -107,28 +120,36 @@ void objective_function(string& str_func, string& str_col, string& str_row, map<
 
 
 template <typename T, typename value_type> 
-void constraint1(string& str_rest, string& str_col, string& str_row, map<vector<T>, value_type>& surf){
+void constraint1(
+    string& str_rest, 
+    string& str_col, 
+    string& str_row, 
+    map<vector<T>, value_type>& superficie
+){
     // Restricción de inventario inicial
-    string str_p, str_r, str_z, str_s, str_m, str_k, str_i, str_j;
+    string str_p, str_r, str_z, str_s, str_m, str_i, str_j;
     string str_temp, rest, rhi;
 
-    for(unsigned short p: P){
+    vector<unsigned short> rg, rgo;
+
+    for (unsigned short p : P) {
         str_p = index_string(p);
-        for(unsigned short r: R){
+        for (unsigned short r : R) {
             str_r = index_string(r);
-            for(unsigned short z: Z){
+            for (unsigned short z : Z) {
                 str_z = index_string(z);
-                for(unsigned short s: S){
+                for (unsigned short s : S) {
                     str_s = index_string(s);
-                    for(unsigned short m: M){
+                    for (unsigned short m : M) {
                         str_m = index_string(m);
-                        vector<unsigned short> rg = get_range<unsigned short>(p, m); // rango de edades
-                        for(unsigned short i = I_MAX; i > 0; --i){
-                            str_i = index_string(i);
+                        rg = get_range<unsigned short>(p, m); // rango de edades
+                        rgo = get_range_over<unsigned short>(p, m); // rango de edades p. sobremaduras
+                        for (short i = -rgo[1]; i <= -1; i++) {
+                            str_i = index_string(-i);
                             rest = "AI"+str_p+str_r+str_z+str_s+str_m+str_i;
-                            rhi = format(surf[{p,r,z,s,m,i}]);
+                            rhi = format(superficie[{p, r, z, s, m, (unsigned short)(-i)}]);
                             str_temp = rest+": ";
-                            for(unsigned short j = max(0, -i+rg[0]); j <= max(0, -i+rg[1]); j++){
+                            for(unsigned short j = max(0, i+rg[0]); j <= max(0, i+rg[1]); j++){
                                 str_j = index_string(j);
                                 str_temp += "Y"+str_p+str_r+str_z+str_s+str_m+str_i+str_j+" + ";
                             }
@@ -166,7 +187,7 @@ void constraint2(string& str_rest, string& str_col, string& str_row){
                             str_j = index_string(j);
                             rest = "SC"+str_p+str_r+str_z+str_s+str_m+str_j;
                             str_rest += rest+": ";
-                            i_max = (j == 0? I_MAX : abs(min(0, j-rg[1]))); // plantacion sobremadura se va para j = 0
+                            i_max = (j == 0? J_MAX : abs(min(0, j-rg[1]))); // plantacion sobremadura se va para j = 0
                             for(unsigned short i = abs(min(0, j-rg[0]))+1; i <= i_max; i++){
                                 str_i = index_string(i);
                                 str_rest += "Y"+str_p+str_r+str_z+str_s+str_m+str_i+str_j+(i != i_max? " + " : "");
@@ -322,7 +343,7 @@ template <typename T, typename value_type> void constraint6(string& str_rest, ma
                         for(unsigned short c = 1; c <= 7; c++){
                             str_c = index_string(c);
                             str_rest += "TT"+str_p+str_r+str_z+str_s+str_m+str_c+": ";
-                            for(unsigned short n: C(c)){
+                            for (unsigned short n : {0}) {
                                 for(unsigned short j = 0; j <= 10; j++){
                                     str_rest += "T"+str_p+str_r+str_z+str_s+str_m+str_n+str_j+" + ";
                                 }
@@ -369,7 +390,7 @@ template <typename T, typename value_type> void constraint7(string& str_rest, ma
                             str_j = index_string(j);
                             str_rest += "RFA"+str_p+str_r+str_z+str_s+str_m+str_j+": ";
                             str_rest += "SST"+str_p+str_r+str_z+str_s+str_m+str_j+" - ";
-                            for(unsigned short n: C(m)){
+                            for(unsigned short n: {0}) {
                                 str_n = index_string(n);
                                 str_rest += "T"+str_p+str_r+str_s+str_m+str_n+str_j+" + ";
                             }
@@ -408,7 +429,7 @@ template <typename T, typename value_type> void constraint8(string& str_rest, ma
                             for(unsigned short l = 0; l <= 12; l++){
                                 str_l = index_string(l);
                                 use_l = false;
-                                for(unsigned short ii: C(l)){
+                                for(unsigned short ii: {0}) {
                                     if(m == ii){
                                         use_l = true;
                                         delete_plus = true;

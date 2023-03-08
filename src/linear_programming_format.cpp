@@ -4,22 +4,10 @@
 #include <chrono>
 
 #include "file_manager.h"
-#include "objective_and_constraints.h" 
+#include "funcs.h" 
 
 
 using namespace std;
-
-
-// DEFINICION DE CONJUNTOS
-#ifndef _SETS
-#define P {1,2,3,4} // propietario
-#define R {5,6,7,8,9,10,13,14} // region administrativa
-#define Z {1,2,4,5,6,7,9} // zona de crecimiento
-#define S {1,2,3,4} // clases de sitio
-#define M {1,2,3,7,8,9,10,11,12} // esquemas de manejo
-#define K {1,2,3,4,5,6,7,8,9,10,11,12,13} // producto
-#define I_MAX 30 // año de plantacion (-)
-#endif
 
 
 
@@ -38,15 +26,21 @@ int main(){
 
     // GENERACION DE ESTRUCTURAS CON DATOS DE ARCHIVOS
 
-    map<vector<unsigned short>, float> perf; // rendimiento
-    map<vector<unsigned short>, float> surf; // superficie
-    map<vector<unsigned short>, float> reconv; // reconversion
-    map<vector<unsigned short>, float> supMax; // superficie máxima cambio tipo (c)
+    map<vector<unsigned short>, float> cambio;
+    map<vector<unsigned short>, float> factor;
+    map<vector<unsigned short>, float> fores;
+    map<vector<unsigned short>, float> raleo;
+    map<vector<unsigned short>, float> reconversion; 
+    map<vector<unsigned short>, float> rendimientos; 
+    map<vector<unsigned short>, float> superficie; 
 
-    load_file_to_map<unsigned short, float>("../data/rendimientos.csv", perf);
-    load_file_to_map<unsigned short, float>("../data/superficie.csv", surf);
-    load_file_to_map<unsigned short, float>("../data/reconversion.csv", reconv);
-    load_file_to_map<unsigned short, float>("../data/supMaximaCambio.csv", supMax);
+    load_file_to_map<unsigned short, float>("../data/cambio.csv", cambio);
+    load_file_to_map<unsigned short, float>("../data/factor.csv", factor);
+    load_file_to_map<unsigned short, float>("../data/fores.csv", fores);
+    load_file_to_map<unsigned short, float>("../data/raleo.csv", raleo);
+    load_file_to_map<unsigned short, float>("../data/rendimientos.csv", rendimientos);
+    load_file_to_map<unsigned short, float>("../data/superficie.csv", superficie);
+    load_file_to_map<unsigned short, float>("../data/reconversion.csv", reconversion);
 
 
     // CREACION DEL ARCHIVO DE SALIDA
@@ -63,12 +57,12 @@ int main(){
 
     // FUNCION OBJETIVO 
 
-    objective_function(str_out, str_col, str_row, perf);
-    append_to_file(out_filename, str_out+" ", 'f');
-    append_to_file(out_columns, str_col);
-    append_to_file(out_rows, str_row);
-    str_out = str_col = str_row = "";
-    cout << "Funcion objetivo: LISTO" << endl;
+    //objective_function(str_out, str_col, str_row, rendimientos, factor);
+    //append_to_file(out_filename, str_out+" ", 'f');
+    //append_to_file(out_columns, str_col);
+    //append_to_file(out_rows, str_row);
+    //str_out = str_col = str_row = "";
+    //cout << "Funcion objetivo: LISTO" << endl;
 
 
     // RESTRICCIONES
@@ -77,7 +71,7 @@ int main(){
 
 
     // Restricción de inventario inicial
-    constraint1(str_out, str_col, str_row, surf);
+    constraint1(str_out, str_col, str_row, superficie);
     append_to_file(out_filename, str_out, 'r');
     append_to_file(out_columns, str_col);
     append_to_file(out_rows, str_row);
@@ -85,44 +79,44 @@ int main(){
     cout << "Restriccion 1: LISTO" << endl;
 
 
-    // Cuantificación de superficie cosechada
-    constraint2(str_out, str_col, str_row);
-    append_to_file(out_filename, str_out, 'r');
-    append_to_file(out_columns, str_col);
-    append_to_file(out_rows, str_row);
-    str_out = str_col = str_row = "";
-    cout << "Restriccion 2: LISTO" << endl;
+    //// Cuantificación de superficie cosechada
+    //constraint2(str_out, str_col, str_row);
+    //append_to_file(out_filename, str_out, 'r');
+    //append_to_file(out_columns, str_col);
+    //append_to_file(out_rows, str_row);
+    //str_out = str_col = str_row = "";
+    //cout << "Restriccion 2: LISTO" << endl;
 
 
-    // Cuantificación de volumen  de corta final
-    constraint3(str_out, str_col, str_row, perf);
-    append_to_file(out_filename, str_out, 'r');
-    append_to_file(out_columns, str_col);
-    append_to_file(out_rows, str_row);
-    str_out = str_col = str_row = "";
-    cout << "Restriccion 3: LISTO" << endl;
+    //// Cuantificación de volumen  de corta final
+    //constraint3(str_out, str_col, str_row, rendimientos);
+    //append_to_file(out_filename, str_out, 'r');
+    //append_to_file(out_columns, str_col);
+    //append_to_file(out_rows, str_row);
+    //str_out = str_col = str_row = "";
+    //cout << "Restriccion 3: LISTO" << endl;
 
 
-    // Límite de superficie de reconversión
-    constraint4(str_out, str_col, str_row, reconv);
-    append_to_file(out_filename, str_out, 'a');
-    append_to_file(out_columns, str_col);
-    append_to_file(out_rows, str_row);
-    str_out = str_col = str_row = "";
-    cout << "Restriccion 4: LISTO" << endl;
+    //// Límite de superficie de reconversión
+    //constraint4(str_out, str_col, str_row, reconversion);
+    //append_to_file(out_filename, str_out, 'a');
+    //append_to_file(out_columns, str_col);
+    //append_to_file(out_rows, str_row);
+    //str_out = str_col = str_row = "";
+    //cout << "Restriccion 4: LISTO" << endl;
 
 
-    // Exclusión superficie de reconversión
-    constraint5(str_out, str_col, str_row);
-    append_to_file(out_filename, str_out, 'a');
-    append_to_file(out_columns, str_col);
-    append_to_file(out_rows, str_row);
-    str_out = str_col = str_row = "";
-    cout << "Restriccion 5: LISTO" << endl;
+    //// Exclusión superficie de reconversión
+    //constraint5(str_out, str_col, str_row);
+    //append_to_file(out_filename, str_out, 'a');
+    //append_to_file(out_columns, str_col);
+    //append_to_file(out_rows, str_row);
+    //str_out = str_col = str_row = "";
+    //cout << "Restriccion 5: LISTO" << endl;
 
 
 
-    append_to_file(out_filename, "\nend");
+    //append_to_file(out_filename, "\nend");
 
 
     cout << "***FIN DEL PROGRAMA. SALIDA GENERADA CON EXITO***" << endl;
