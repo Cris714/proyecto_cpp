@@ -94,18 +94,30 @@ void objective_function(
                                 str_j = index_string(j);
 
                                 v_sum = 0.F;
-                                fact = (i < 0 ? factor[{p, r, z, s, m, (unsigned short)(-i)}] : 0.F);
 
-                                if (fact > 1e-3) { // factor > ~0
+                                if (i < 0) { // para las variables Y (se añade factor correspondiente)
+                                    fact = factor[{p, r, z, s, m, (unsigned short)(-i)}];
+
+                                    if (fact > 1e-3) { // factor > ~0
+                                        for (unsigned short k : K) {
+                                            age = (i < 0 ? (unsigned short)(-i) + j : j - (unsigned short)i);
+                                            v_sum += rendimientos[{k, z, s, m, age}];
+                                        }
+                                    }
+
+                                    coef = format(v_sum * fact);
+                                }
+                                else { // para las variables X
                                     for (unsigned short k : K) {
                                         age = (i < 0 ? (unsigned short)(-i) + j : j - (unsigned short)i);
                                         v_sum += rendimientos[{k, z, s, m, age}];
                                     }
+
+                                    coef = format(v_sum);
                                 }
 
                                 if (v_sum > 1e-3) { // multiplicador > ~0
                                     var = (i < 0 ? "Y" : "X") + str_p + str_r + str_z + str_s + str_m + str_i + str_j;
-                                    coef = format(v_sum * fact);
                                     str_func += coef+" "+var+" + ";
                                     str_col += "FO,"+var+","+coef+"\n";
                                 }
@@ -156,8 +168,8 @@ void constraint1(
                                 str_temp += "Y" + str_p + str_r + str_z + str_s + str_m + str_i + str_j + " + ";
                             }
                             str_temp = str_temp.substr(0, str_temp.length()-3);
-                            str_rest += str_temp + " = " + rhi + " ";
-                            str_row += rest + ",E," + rhi + "\n";
+                            str_rest += str_temp + " <= " + rhi + " ";
+                            str_row += rest + ",L," + rhi + "\n";
                         }
                     }
                 }
@@ -200,7 +212,8 @@ void constraint2(
                             rest = "SC" + str_p + str_r + str_z + str_s + str_m + str_j;
                             str_rest += rest+": ";
 
-                            i_min = (short)j - (j == 0 ? (short)rgo[1] : (short)rg[1]);
+                            i_min = (short)j - (short)rg[1];
+                            if (i_min < 0) i_min = max(-30, (short)j - (short)rgo[1]); // admite plantaciones sobremaduras para Y
                             i_max = (short)j - (short)rg[0];
 
                             for(short i = i_min; i <= i_max; i++){
@@ -397,24 +410,24 @@ template <typename T, typename value_type> void constraint6(
                     for (unsigned short m : M) {
                         str_m = index_string(m);
                         for (unsigned short n : M) {
+                            if (m == n) continue; // se prohiben las rest. TT para m == n
                             str_n = index_string(n);
 
                             r_value = cambio[{p, r, z, s, m, n}];
+                            
+                            rest = "TT" + str_p + str_r + str_z + str_s + str_m + str_n;
+                            str_rest += rest + ": ";
+                            rhi = format(r_value);
 
-                            if (r_value > 1e-3) {
-                                rest = "TT" + str_p + str_r + str_z + str_s + str_m + str_n;
-                                str_rest += rest + ": ";
-                                rhi = format(r_value);
-
-                                for (unsigned short j = 0; j <= 9; j++) {
-                                    str_j = index_string(j);
-                                    str_rest += "T" + str_p + str_r + str_z + str_s + str_m + str_n + str_j + \
-                                        (j != 9 ? " + " : "");
-                                }
-
-                                str_rest += " <= " + rhi + " ";
-                                str_row += rest + ",L," + rhi + "\n";
+                            for (unsigned short j = 0; j <= 9; j++) {
+                                str_j = index_string(j);
+                                str_rest += "T" + str_p + str_r + str_z + str_s + str_m + str_n + str_j + \
+                                    (j != 9 ? " + " : "");
                             }
+
+                            str_rest += " <= " + rhi + " ";
+                            str_row += rest + ",L," + rhi + "\n";
+                            
                         }
                     }
                 }
@@ -477,7 +490,7 @@ template <typename T, typename value_type> void constraint8(
 ){
     // Reforestación  B (superficie a reforestar con una especie igual o distinta a la anterior)
     string str_p, str_r, str_z, str_s, str_m, str_j, str_l, str_k;
-    string rest;
+    string str_temp, rest;
     float value;
 
     vector<unsigned short> rg;
@@ -500,6 +513,7 @@ template <typename T, typename value_type> void constraint8(
 
                             rest = "RFB" + str_p + str_r + str_z + str_s + str_m + str_j;
                             str_rest += rest + ": ";
+                            str_temp = "";
 
                             // sumatoria 1: l / (p,r,z,s,l,m)
                             for (unsigned short l : M) {
@@ -507,13 +521,18 @@ template <typename T, typename value_type> void constraint8(
 
                                 value = cambio[{p, r, z, s, l, m}];
 
-                                if (value > 1e-3) {
-                                    str_rest += "T" + str_p + str_r + str_z + str_s + str_l + str_m + str_j + " + ";
+                                if (value > 1e-3 || l == m) { 
+                                    str_temp += "T" + str_p + str_r + str_z + str_s + str_l + str_m + str_j + " + ";
                                 }
                             }
 
-                            // variable Fprszsmj
-                            str_rest += "F" + str_p + str_r + str_z + str_s + str_m + str_j;
+                            // variable Fprszsmj (solo para j == 0 o j == 1)
+                            if (j <= 1) {
+                                str_temp += "F" + str_p + str_r + str_z + str_s + str_m + str_j;
+                            }
+                            else { // se saca el " + "; siempre hay un T
+                                str_temp = str_temp.substr(0, str_temp.length() - 3);
+                            }
 
                             // sumatoria 2: k = j+edminm -> j+edmaxm
                             for (unsigned short k = j + rg[0]; k <= j + rg[1]; k++) {
