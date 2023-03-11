@@ -13,7 +13,7 @@ using namespace std;
 #define S {1,2,3,4} // clases de sitio
 #define M {1,2,3,4,5,6,9,10,11} // esquemas de manejo
 #define K {1,2,3,4,5,6,7} // producto
-#define J_MAX 41 // horizonte de planificacion
+#define HP 45 // horizonte de planificacion
 
 #define _DIGITS 4
 
@@ -88,9 +88,9 @@ void objective_function(
                         rg = get_range<unsigned short>(p, m); // rango de edades
                         rgo = get_range_over<unsigned short>(p, m); // rango de edades p. sobremaduras
 
-                        for (short i = -rgo[1]; i <= J_MAX - rg[0]; i++) {
+                        for (short i = -rgo[1]; i <= HP - rg[0]; i++) {
                             str_i = index_string(i < 0 ? -i : i);
-                            for (unsigned short j = 0; j <= J_MAX; j++) {
+                            for (unsigned short j = 0; j <= HP; j++) {
                                 str_j = index_string(j);
 
                                 v_sum = 0.F;
@@ -206,7 +206,7 @@ void constraint2(
                         rg = get_range<unsigned short>(p, m); // rango de edades
                         rgo = get_range_over<unsigned short>(p, m); // rango de edades p. sobremaduras
 
-                        for(unsigned short j = 0; j <= J_MAX; j++){ 
+                        for(unsigned short j = 0; j <= HP; j++){ 
                             str_j = index_string(j);
 
                             rest = "SC" + str_p + str_r + str_z + str_s + str_m + str_j;
@@ -263,7 +263,7 @@ void constraint3(
 
                 for (unsigned short k : K) {
                     str_k = index_string(k);
-                    for (unsigned short j = 0; j <= J_MAX; j++) {
+                    for (unsigned short j = 0; j <= HP; j++) {
                         str_j = index_string(j);
 
                         str_temp = "";
@@ -369,7 +369,7 @@ void constraint5(
                     str_s = index_string(s);
                     for (unsigned short m : M) {
                         str_m = index_string(m);
-                        for (unsigned short j = 0; j <= J_MAX; j++){
+                        for (unsigned short j = 0; j <= HP; j++){
                             str_j = index_string(j);
 
                             rest = "LST" + str_p + str_r + str_z + str_s + str_m + str_j;
@@ -419,10 +419,10 @@ template <typename T, typename value_type> void constraint6(
                             str_rest += rest + ": ";
                             rhi = format(r_value);
 
-                            for (unsigned short j = 0; j <= 9; j++) {
+                            for (unsigned short j = 0; j <= 10; j++) {
                                 str_j = index_string(j);
                                 str_rest += "T" + str_p + str_r + str_z + str_s + str_m + str_n + str_j + \
-                                    (j != 9 ? " + " : "");
+                                    (j != 10 ? " + " : "");
                             }
 
                             str_rest += " <= " + rhi + " ";
@@ -457,17 +457,22 @@ void constraint7(
                     str_s = index_string(s);
                     for (unsigned short m : M){
                         str_m = index_string(m);
-                        for (unsigned short j = 0; j <= J_MAX; j++){
+                        for (unsigned short j = 0; j <= HP; j++){
                             str_j = index_string(j);
 
                             rest = "RFA" + str_p + str_r + str_z + str_s + str_m + str_j;
                             str_rest += rest + ": ";
 
                             str_rest += "SST" + str_p + str_r + str_z + str_s + str_m + str_j;
-
-                            for(unsigned short n: M) {
-                                str_n = index_string(n);
-                                str_rest += " - T" + str_p + str_r + str_z + str_s + str_m + str_n + str_j;
+                            
+                            if (j <= 10) {
+                                for (unsigned short n : M) {
+                                    str_n = index_string(n);
+                                    str_rest += " - T" + str_p + str_r + str_z + str_s + str_m + str_n + str_j;
+                                }
+                            }
+                            else { // para 10 < j <= 45 solo aparecen Tprzsmnj para m == n
+                                str_rest += " - T" + str_p + str_r + str_z + str_s + str_m + str_m + str_j;
                             }
 
                             str_rest += " = 0 ";
@@ -508,7 +513,7 @@ template <typename T, typename value_type> void constraint8(
 
                         rg = get_range<unsigned short>(p, m);
 
-                        for (unsigned short j = 0; j < J_MAX; j++) {
+                        for (unsigned short j = 0; j <= HP; j++) {
                             str_j = index_string(j);
 
                             rest = "RFB" + str_p + str_r + str_z + str_s + str_m + str_j;
@@ -516,14 +521,19 @@ template <typename T, typename value_type> void constraint8(
                             str_temp = "";
 
                             // sumatoria 1: l / (p,r,z,s,l,m)
-                            for (unsigned short l : M) {
-                                str_l = index_string(l);
+                            if (j <= 10) {
+                                for (unsigned short l : M) {
+                                    str_l = index_string(l);
 
-                                value = cambio[{p, r, z, s, l, m}];
+                                    value = cambio[{p, r, z, s, l, m}];
 
-                                if (value > 1e-3 || l == m) { 
-                                    str_temp += "T" + str_p + str_r + str_z + str_s + str_l + str_m + str_j + " + ";
+                                    if (value > 1e-3 || l == m) { 
+                                        str_temp += "T" + str_p + str_r + str_z + str_s + str_l + str_m + str_j + " + ";
+                                    }
                                 }
+                            }
+                            else { // para 10 < j <= 45 solo aparecen Tprzsmnj para m == l
+                                str_temp += "T" + str_p + str_r + str_z + str_s + str_m + str_m + str_j + " + ";
                             }
 
                             // variable Fprszsmj (solo para j == 0 o j == 1)
@@ -533,16 +543,19 @@ template <typename T, typename value_type> void constraint8(
                             else { // se saca el " + "; siempre hay un T
                                 str_temp = str_temp.substr(0, str_temp.length() - 3);
                             }
+                            str_rest += str_temp;
 
                             // sumatoria 2: k = j+edminm -> j+edmaxm
-                            for (unsigned short k = j + rg[0]; k <= j + rg[1]; k++) {
+                            for (unsigned short k = j + rg[0]; k <= min(HP, j + rg[1]); k++) {
                                 str_k = index_string(k);
 
                                 str_rest += " - X" + str_p + str_r + str_z + str_s + str_m + str_j + str_k;
                             }
 
                             // variable Wprzsmj
-                            str_rest += " - W" + str_p + str_r + str_z + str_s + str_m + str_j;
+                            if (j + rg[1] >= HP) { // solo si la plantacion + edad maxima es >= HP
+                                str_rest += " - W" + str_p + str_r + str_z + str_s + str_m + str_j;
+                            }
 
                             // lado derecho
                             str_rest += " = 0 ";
@@ -577,7 +590,7 @@ template <typename T, typename value_type> void constraint9(
                 str_r = index_string(r);
                 for (unsigned short m : M) {
                     str_m = index_string(m);
-                    for (unsigned short j = 0; j <= J_MAX; j++) {
+                    for (unsigned short j = 0; j <= HP; j++) {
                         str_j = index_string(j);
 
                         rest = "RT" + str_k + str_p + str_r + str_m + str_j;
@@ -597,7 +610,7 @@ template <typename T, typename value_type> void constraint9(
 
                                     if (value > 1e-3) {
                                         str_val = format(value);
-                                        for (unsigned short n = 0; n <= J_MAX; n++) {
+                                        for (unsigned short n = 0; n <= HP; n++) {
                                             str_n = index_string(n);
 
                                             var = "X" + str_p + str_r + str_z + str_s + str_m + str_jl + str_n;

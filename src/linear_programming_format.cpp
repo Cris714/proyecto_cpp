@@ -79,13 +79,13 @@ int main(){
     //cout << "Restriccion 1: LISTO" << endl;
 
 
-    // (SC) Cuantificación de superficie cosechada
-    constraint2(str_out, str_col, str_row);
-    append_to_file(out_filename, str_out, 'r');
-    append_to_file(out_columns, str_col);
-    append_to_file(out_rows, str_row);
-    str_out = str_col = str_row = "";
-    cout << "Restriccion 2: LISTO" << endl;
+    //// (SC) Cuantificación de superficie cosechada
+    //constraint2(str_out, str_col, str_row);
+    //append_to_file(out_filename, str_out, 'r');
+    //append_to_file(out_columns, str_col);
+    //append_to_file(out_rows, str_row);
+    //str_out = str_col = str_row = "";
+    //cout << "Restriccion 2: LISTO" << endl;
 
 
     //// (VC) Cuantificación de volumen  de corta final
@@ -133,13 +133,13 @@ int main(){
     //cout << "Restriccion 7: LISTO" << endl;
 
 
-    //// (RFB) Reforestación B (superficie a reforestar con una especie igual o distinta a la anterior)
-    //constraint8(str_out, str_col, str_row, cambio);
-    //append_to_file(out_filename, str_out, 'a');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 8: LISTO" << endl;
+    // (RFB) Reforestación B (superficie a reforestar con una especie igual o distinta a la anterior)
+    constraint8(str_out, str_col, str_row, cambio);
+    append_to_file(out_filename, str_out, 'a');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 8: LISTO" << endl;
 
 
     //// (RT) Cuantificacion de volumen de raleos
