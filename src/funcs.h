@@ -104,6 +104,7 @@ void objective_function(
                                             v_sum += rendimientos[{k, z, s, m, age}];
                                         }
                                     }
+                                    else continue; // 
 
                                     coef = format(v_sum * fact);
                                 }
@@ -128,6 +129,26 @@ void objective_function(
             }
         }
     }
+
+    // variables Rkprmj
+    for (unsigned short k = 4; k <= 7; k++) {
+        str_k = index_string(k);
+        for (unsigned short p : P) {
+            str_p = index_string(p);
+            for (unsigned short r : R) {
+                str_r = index_string(r);
+                for (unsigned short m : M) {
+                    str_m = index_string(m);
+                    for (unsigned short j = 0; j <= HP; j++) {
+                        str_j = index_string(j);
+
+                        str_func += "R" + str_k + str_p + str_r + str_m + str_j + " + ";
+                    }
+                }
+            }
+        }
+    }
+
     str_func = str_func.substr(0, str_func.length()-3); // extraccion de ' + '
 }
 
@@ -419,10 +440,10 @@ template <typename T, typename value_type> void constraint6(
                             str_rest += rest + ": ";
                             rhi = format(r_value);
 
-                            for (unsigned short j = 0; j <= 10; j++) {
+                            for (unsigned short j = 0; j <= 9; j++) {
                                 str_j = index_string(j);
                                 str_rest += "T" + str_p + str_r + str_z + str_s + str_m + str_n + str_j + \
-                                    (j != 10 ? " + " : "");
+                                    (j != 9 ? " + " : "");
                             }
 
                             str_rest += " <= " + rhi + " ";
@@ -465,13 +486,13 @@ void constraint7(
 
                             str_rest += "SST" + str_p + str_r + str_z + str_s + str_m + str_j;
                             
-                            if (j <= 10) {
+                            if (j < 10) {
                                 for (unsigned short n : M) {
                                     str_n = index_string(n);
                                     str_rest += " - T" + str_p + str_r + str_z + str_s + str_m + str_n + str_j;
                                 }
                             }
-                            else { // para 10 < j <= 45 solo aparecen Tprzsmnj para m == n
+                            else { // para 10 <= j <= 45 solo aparecen Tprzsmnj para m == n
                                 str_rest += " - T" + str_p + str_r + str_z + str_s + str_m + str_m + str_j;
                             }
 
@@ -577,10 +598,13 @@ template <typename T, typename value_type> void constraint9(
     map<vector<T>, value_type>& raleo
 ){
     // Cuantificación de volumen de raleos
-    string str_k, str_p, str_r, str_m, str_j, str_z, str_s, str_n, str_jl;
+    string str_k, str_p, str_r, str_m, str_j, str_z, str_s, str_n, str_jl, str_plt;
     string str_temp, rest, var, str_val;
+    short plt;
     float value;
     bool changes;
+
+    vector<unsigned short> rg;
 
     for (unsigned short k = 4; k <= 7; k++) {
         str_k = index_string(k);
@@ -590,6 +614,9 @@ template <typename T, typename value_type> void constraint9(
                 str_r = index_string(r);
                 for (unsigned short m : M) {
                     str_m = index_string(m);
+
+                    rg = get_range(p, m);
+
                     for (unsigned short j = 0; j <= HP; j++) {
                         str_j = index_string(j);
 
@@ -597,7 +624,7 @@ template <typename T, typename value_type> void constraint9(
                         str_rest += rest + ": ";
                         changes = false;
 
-                        // 4 sumatorias para rX
+                        // sumatorias para Y X W
                         str_temp = "";
                         for (unsigned short z : Z) {
                             str_z = index_string(z);
@@ -610,43 +637,24 @@ template <typename T, typename value_type> void constraint9(
 
                                     if (value > 1e-3) {
                                         str_val = format(value);
-                                        for (unsigned short n = 0; n <= HP; n++) {
+                                        plt = (short)j - (short)jl;
+                                        str_plt = index_string(plt < 0 ? -plt : plt);
+                                        for (unsigned short n = max(0, plt + rg[0]); n <= min(HP, plt + rg[1]); n++) {
                                             str_n = index_string(n);
-
-                                            var = "X" + str_p + str_r + str_z + str_s + str_m + str_jl + str_n;
-                                            str_temp += var + " + ";
+                                            var = (plt < 0 ? "Y" : "X") + str_p + str_r + str_z + str_s + str_m + str_plt + str_n;
+                                            str_temp += str_val + " " + var + " + ";
+                                            str_col += "RT," + var + "," + str_val + "\n";
+                                        }
+                                        if (plt + rg[1] >= HP) { // inventario final
+                                            var = "W" + str_p + str_r + str_z + str_s + str_m + str_plt;
+                                            str_temp += str_val + " " + var + " + ";
                                             str_col += "RT," + var + "," + str_val + "\n";
                                         }
                                     }
                                 }
                             }
                         }
-                        if (str_temp.length() > 3) { // añade cambios, si es que hay
-                            str_rest += str_temp.substr(0, str_temp.length() - 3);
-                            changes = true;
-                        }
 
-                        // 3 sumatorias para rW
-                        str_temp = "";
-                        for (unsigned short z : Z) {
-                            str_z = index_string(z);
-                            for (unsigned short s : S) {
-                                str_s = index_string(s);
-                                for (unsigned short jl = 9; jl <= 19; jl++) {
-                                    str_jl = index_string(jl);
-
-                                    value = raleo[{k, z, s, m, jl}];
-
-                                    if (value > 1e-3) {
-                                        str_val = format(value);
-                                        
-                                        var = "W" + str_p + str_r + str_z + str_s + str_m + str_jl;
-                                        str_temp += var + " + ";
-                                        str_col += "RT," + var + "," + str_val + "\n";
-                                    }
-                                }
-                            }
-                        }
                         if (str_temp.length() > 3) { // añade cambios, si es que hay
                             str_rest += str_temp.substr(0, str_temp.length() - 3);
                             changes = true;

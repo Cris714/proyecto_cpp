@@ -57,12 +57,12 @@ int main(){
 
     // FUNCION OBJETIVO 
 
-    //objective_function(str_out, str_col, str_row, rendimientos, factor);
-    //append_to_file(out_filename, str_out+" ", 'f');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Funcion objetivo: LISTO" << endl;
+    objective_function(str_out, str_col, str_row, rendimientos, factor);
+    append_to_file(out_filename, str_out+" ", 'f');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Funcion objetivo: LISTO" << endl;
 
 
     // RESTRICCIONES
@@ -70,67 +70,67 @@ int main(){
     append_to_file(out_filename, "\nSubject to");
 
 
-    //// (AI) Restricción de inventario inicial 
-    //constraint1(str_out, str_col, str_row, superficie);
-    //append_to_file(out_filename, str_out, 'r');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 1: LISTO" << endl;
+    // (AI) Restricción de inventario inicial 
+    constraint1(str_out, str_col, str_row, superficie);
+    append_to_file(out_filename, str_out, 'r');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 1: LISTO" << endl;
 
 
-    //// (SC) Cuantificación de superficie cosechada
-    //constraint2(str_out, str_col, str_row);
-    //append_to_file(out_filename, str_out, 'r');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 2: LISTO" << endl;
+    // (SC) Cuantificación de superficie cosechada
+    constraint2(str_out, str_col, str_row);
+    append_to_file(out_filename, str_out, 'r');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 2: LISTO" << endl;
 
 
-    //// (VC) Cuantificación de volumen  de corta final
-    //constraint3(str_out, str_col, str_row, rendimientos, factor);
-    //append_to_file(out_filename, str_out, 'r');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 3: LISTO" << endl;
+    // (VC) Cuantificación de volumen  de corta final
+    constraint3(str_out, str_col, str_row, rendimientos, factor);
+    append_to_file(out_filename, str_out, 'r');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 3: LISTO" << endl;
 
 
-    //// (RET) Límite de superficie de reconversión
-    //constraint4(str_out, str_col, str_row, reconversion);
-    //append_to_file(out_filename, str_out, 'a');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 4: LISTO" << endl;
+    // (RET) Límite de superficie de reconversión
+    constraint4(str_out, str_col, str_row, reconversion);
+    append_to_file(out_filename, str_out, 'a');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 4: LISTO" << endl;
 
 
-    //// (LST) Exclusión superficie de reconversión
-    //constraint5(str_out, str_col, str_row);
-    //append_to_file(out_filename, str_out, 'a');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 5: LISTO" << endl;
+    // (LST) Exclusión superficie de reconversión
+    constraint5(str_out, str_col, str_row);
+    append_to_file(out_filename, str_out, 'a');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 5: LISTO" << endl;
 
 
-    //// (TT) Límite de superficie con cambio de especie
-    //constraint6(str_out, str_col, str_row, cambio);
-    //append_to_file(out_filename, str_out, 'a');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 6: LISTO" << endl;
+    // (TT) Límite de superficie con cambio de especie
+    constraint6(str_out, str_col, str_row, cambio);
+    append_to_file(out_filename, str_out, 'a');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 6: LISTO" << endl;
 
 
-    //// (RFA) Reforestación A (superficie disponible para reforestar con o sin cambio de especie)
-    //constraint7(str_out, str_col, str_row);
-    //append_to_file(out_filename, str_out, 'a');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 7: LISTO" << endl;
+    // (RFA) Reforestación A (superficie disponible para reforestar con o sin cambio de especie)
+    constraint7(str_out, str_col, str_row);
+    append_to_file(out_filename, str_out, 'a');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 7: LISTO" << endl;
 
 
     // (RFB) Reforestación B (superficie a reforestar con una especie igual o distinta a la anterior)
@@ -142,22 +142,22 @@ int main(){
     cout << "Restriccion 8: LISTO" << endl;
 
 
-    //// (RT) Cuantificacion de volumen de raleos
-    //constraint9(str_out, str_col, str_row, raleo);
-    //append_to_file(out_filename, str_out, 'a');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 9: LISTO" << endl;
+    // (RT) Cuantificacion de volumen de raleos
+    constraint9(str_out, str_col, str_row, raleo);
+    append_to_file(out_filename, str_out, 'a');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 9: LISTO" << endl;
 
 
-    //// (FT) Superficie disponible para forestación
-    //constraint10(str_out, str_col, str_row, fores);
-    //append_to_file(out_filename, str_out, 'a');
-    //append_to_file(out_columns, str_col);
-    //append_to_file(out_rows, str_row);
-    //str_out = str_col = str_row = "";
-    //cout << "Restriccion 10: LISTO" << endl;
+    // (FT) Superficie disponible para forestación
+    constraint10(str_out, str_col, str_row, fores);
+    append_to_file(out_filename, str_out, 'a');
+    append_to_file(out_columns, str_col);
+    append_to_file(out_rows, str_row);
+    str_out = str_col = str_row = "";
+    cout << "Restriccion 10: LISTO" << endl;
 
 
 
