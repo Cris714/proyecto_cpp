@@ -56,7 +56,7 @@ int main(){
 
 
     // FUNCION OBJETIVO 
-
+    
     objective_function(str_out, str_col, str_row, rendimientos, factor);
     append_to_file(out_filename, str_out+" ", 'f');
     append_to_file(out_columns, str_col);
@@ -66,7 +66,7 @@ int main(){
 
 
     // RESTRICCIONES
-
+    
     append_to_file(out_filename, "\nSubject to");
 
 
@@ -78,7 +78,7 @@ int main(){
     str_out = str_col = str_row = "";
     cout << "Restriccion 1: LISTO" << endl;
 
-
+    
     // (SC) Cuantificación de superficie cosechada
     constraint2(str_out, str_col, str_row);
     append_to_file(out_filename, str_out, 'r');
@@ -87,7 +87,7 @@ int main(){
     str_out = str_col = str_row = "";
     cout << "Restriccion 2: LISTO" << endl;
 
-
+    
     // (VC) Cuantificación de volumen  de corta final
     constraint3(str_out, str_col, str_row, rendimientos, factor);
     append_to_file(out_filename, str_out, 'r');
@@ -161,8 +161,8 @@ int main(){
 
 
 
-    //append_to_file(out_filename, "\nend");
-
+    append_to_file(out_filename, "\nend");
+    
 
     cout << "***FIN DEL PROGRAMA. SALIDA GENERADA CON EXITO***" << endl;
 

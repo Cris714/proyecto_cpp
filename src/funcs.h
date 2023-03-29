@@ -90,7 +90,7 @@ void objective_function(
 
                         for (short i = -rgo[1]; i <= HP - rg[0]; i++) {
                             str_i = index_string(i < 0 ? -i : i);
-                            for (unsigned short j = 0; j <= HP; j++) {
+                            for (unsigned short j = max(0, (int)i); j <= min(HP, i+(short)rg[1]); j++) {
                                 str_j = index_string(j);
 
                                 v_sum = 0.F;
@@ -234,7 +234,7 @@ void constraint2(
                             str_rest += rest+": ";
 
                             i_min = (short)j - (short)rg[1];
-                            if (i_min < 0) i_min = max(-30, (short)j - (short)rgo[1]); // admite plantaciones sobremaduras para Y
+                            //if (i_min < 0) i_min = max(-30, (short)j - (short)rgo[1]); // admite plantaciones sobremaduras para Y
                             i_max = (short)j - (short)rg[0];
 
                             for(short i = i_min; i <= i_max; i++){
