@@ -64,11 +64,11 @@ int main(){
     str_out = str_col = str_row = "";
     cout << "Funcion objetivo: LISTO" << endl;
 
-
+    
     // RESTRICCIONES
     
     append_to_file(out_filename, "\nSubject to");
-
+    
 
     // (AI) Restricción de inventario inicial 
     constraint1(str_out, str_col, str_row, superficie);
@@ -96,7 +96,7 @@ int main(){
     str_out = str_col = str_row = "";
     cout << "Restriccion 3: LISTO" << endl;
 
-
+    
     // (RET) Límite de superficie de reconversión
     constraint4(str_out, str_col, str_row, reconversion);
     append_to_file(out_filename, str_out, 'a');

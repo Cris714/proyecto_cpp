@@ -68,7 +68,7 @@ void objective_function(
     string str_p, str_r, str_z, str_s, str_m, str_k, str_i, str_j;
     string var, coef;
     float v_sum, fact;
-    unsigned short age;
+    unsigned short age, j_max;
 
     vector<unsigned short> rg, rgo;
 
@@ -88,9 +88,10 @@ void objective_function(
                         rg = get_range<unsigned short>(p, m); // rango de edades
                         rgo = get_range_over<unsigned short>(p, m); // rango de edades p. sobremaduras
 
-                        for (short i = -rgo[1]; i <= HP - rg[0]; i++) {
+                        for (short i = -rgo[1]+1; i <= HP - rg[0]; i++) {
                             str_i = index_string(i < 0 ? -i : i);
-                            for (unsigned short j = max(0, (int)i); j <= min(HP, i+(short)rg[1]); j++) {
+                            j_max = (unsigned short)min(HP, i + (short)(i < 0 ? rgo[1]-1 : rg[1]));
+                            for (unsigned short j = max(0, (int)i); j <= j_max; j++) {
                                 str_j = index_string(j);
 
                                 v_sum = 0.F;
@@ -101,6 +102,8 @@ void objective_function(
                                     if (fact > 1e-3) { // factor > ~0
                                         for (unsigned short k : K) {
                                             age = (i < 0 ? (unsigned short)(-i) + j : j - (unsigned short)i);
+                                            if (m <= 6) age = min((unsigned short)30, age);
+                                            if (m >= 9) age = min((unsigned short)20, age);
                                             v_sum += rendimientos[{k, z, s, m, age}];
                                         }
                                     }
@@ -184,7 +187,7 @@ void constraint1(
                             rest = "AI" + str_p + str_r + str_z + str_s + str_m + str_i;
                             rhi = format(superficie[{p, r, z, s, m, (unsigned short)(-i)}]);
                             str_temp = rest+": ";
-                            for(unsigned short j = max(0, i+rg[0]); j <= max(0, i+rg[1]); j++){
+                            for(unsigned short j = max(0, i+rg[0]); j < max(0, i+rgo[1]); j++){
                                 str_j = index_string(j);
                                 str_temp += "Y" + str_p + str_r + str_z + str_s + str_m + str_i + str_j + " + ";
                             }
@@ -233,7 +236,7 @@ void constraint2(
                             rest = "SC" + str_p + str_r + str_z + str_s + str_m + str_j;
                             str_rest += rest+": ";
 
-                            i_min = (short)j - (short)rg[1];
+                            i_min = (short)j - (short)(j <= rg[1] ? rgo[1]-1 : rg[1]);
                             //if (i_min < 0) i_min = max(-30, (short)j - (short)rgo[1]); // admite plantaciones sobremaduras para Y
                             i_max = (short)j - (short)rg[0];
 
@@ -288,7 +291,7 @@ void constraint3(
                         str_j = index_string(j);
 
                         str_temp = "";
-                        i_min = (short)j - (j == 0 ? (short)rgo[1] : (short)rg[1]);
+                        i_min = (short)j - (short)(j <= rg[1] ? rgo[1]-1 : rg[1]);
                         i_max = (short)j - (short)rg[0];
 
                         for (unsigned short z : Z) {
@@ -299,6 +302,8 @@ void constraint3(
                                     fact = (i < 0 ? factor[{p, r, z, s, m, (unsigned short)(-i)}] : 0.F);
 
                                     age = (i < 0 ? (unsigned short)(-i) + j : j - (unsigned short)i);
+                                    if (m <= 6) age = min((unsigned short)30, age);
+                                    if (m >= 9) age = min((unsigned short)20, age);
                                     value = rendimientos[{k, z, s, m, age}];
 
                                     if (fact > 1e-3 && value > 1e-3) {
@@ -395,9 +400,10 @@ void constraint5(
 
                             rest = "LST" + str_p + str_r + str_z + str_s + str_m + str_j;
                             str_rest += rest + ": ";
-                            str_rest += "S" + str_p + str_r + str_z + str_s + str_m + str_j + " - ";
-                            str_rest += "SST" + str_p + str_r + str_z + str_s + str_m + str_j + " - ";
-                            str_rest += "REC" + str_p + str_r + str_z + str_s + str_m + str_j + " = 0 ";
+                            str_rest += "S" + str_p + str_r + str_z + str_s + str_m + str_j;
+                            str_rest += " - SST" + str_p + str_r + str_z + str_s + str_m + str_j;
+                            if (j <= 10) str_rest += " - REC" + str_p + str_r + str_z + str_s + str_m + str_j;
+                            str_rest += " = 0 ";
                             str_row += rest + ",E,0\n";
                         }
                     }
