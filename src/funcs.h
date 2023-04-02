@@ -90,7 +90,7 @@ void objective_function(
 
                         for (short i = -rgo[1]+1; i <= HP - rg[0]; i++) {
                             str_i = index_string(i < 0 ? -i : i);
-                            j_max = (unsigned short)min(HP, i + (short)(i < 0 ? rgo[1]-1 : rg[1]));
+                            j_max = (unsigned short)min(HP, i + (short)(i < -rg[1] ? rgo[1] - 1 : rg[1]));
                             for (unsigned short j = max(0, (int)i); j <= j_max; j++) {
                                 str_j = index_string(j);
 
@@ -167,6 +167,7 @@ void constraint1(
     // Restricción de inventario inicial
     string str_p, str_r, str_z, str_s, str_m, str_i, str_j;
     string str_temp, rest, rhi;
+    unsigned short jmin, jmax;
 
     vector<unsigned short> rg, rgo;
 
@@ -182,12 +183,17 @@ void constraint1(
                         str_m = index_string(m);
                         rg = get_range<unsigned short>(p, m); // rango de edades
                         rgo = get_range_over<unsigned short>(p, m); // rango de edades p. sobremaduras
-                        for (short i = -rgo[1]; i <= -1; i++) {
+                        for (short i = -rgo[1]+1; i <= -1; i++) {
                             str_i = index_string(-i);
                             rest = "AI" + str_p + str_r + str_z + str_s + str_m + str_i;
                             rhi = format(superficie[{p, r, z, s, m, (unsigned short)(-i)}]);
                             str_temp = rest+": ";
-                            for(unsigned short j = max(0, i+rg[0]); j < max(0, i+rgo[1]); j++){
+
+                            jmin = max(0, i + rg[0]);
+                            jmax = max(0, i + rg[1] + 1);
+                            if (jmax == 0) jmax = max(0, i + rgo[1]);
+
+                            for(unsigned short j = jmin; j < jmax; j++){
                                 str_j = index_string(j);
                                 str_temp += "Y" + str_p + str_r + str_z + str_s + str_m + str_i + str_j + " + ";
                             }
@@ -236,7 +242,8 @@ void constraint2(
                             rest = "SC" + str_p + str_r + str_z + str_s + str_m + str_j;
                             str_rest += rest+": ";
 
-                            i_min = (short)j - (short)(j <= rg[1] ? rgo[1]-1 : rg[1]);
+                            i_min = (short)j - (short)rgo[1] + 1;
+                            if (i_min >= -rg[1]) i_min = (short)j - (short)rg[1];
                             //if (i_min < 0) i_min = max(-30, (short)j - (short)rgo[1]); // admite plantaciones sobremaduras para Y
                             i_max = (short)j - (short)rg[0];
 
@@ -548,7 +555,7 @@ template <typename T, typename value_type> void constraint8(
                             str_temp = "";
 
                             // sumatoria 1: l / (p,r,z,s,l,m)
-                            if (j <= 10) {
+                            if (j <= 9) {
                                 for (unsigned short l : M) {
                                     str_l = index_string(l);
 
